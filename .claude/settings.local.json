@@ -45,7 +45,8 @@
       "Bash(node -e \"const p=require\\('./node_modules/@privy-io/react-auth/package.json'\\); console.log\\('version:', p.version\\); console.log\\('peerDeps:', JSON.stringify\\(p.peerDependencies, null, 2\\)\\); console.log\\('wagmi dep:', \\(p.dependencies||{}\\).wagmi || 'not in deps'\\);\")",
       "Bash(node -e \"const p=require\\('./node_modules/wagmi/package.json'\\); console.log\\('wagmi version:', p.version\\); console.log\\('peerDeps:', JSON.stringify\\(p.peerDependencies||{}, null, 2\\)\\); console.log\\('react peer:', \\(p.peerDependencies||{}\\).react || 'none'\\);\")",
       "Bash(node -e \"const p=require\\('./node_modules/@privy-io/react-auth/package.json'\\); console.log\\('main:', p.main\\); console.log\\('exports:', JSON.stringify\\(p.exports, null, 2\\).slice\\(0, 500\\)\\);\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

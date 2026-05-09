@@ -47,13 +47,18 @@ export default function ProfilePage() {
     setLoading(true);
     fetchUserAttestations(walletAddress, schemaUID)
       .then((results) => {
-        // Resolve cache names from local data
         const resolved = results.map((a) => {
           const cache = getCacheById(a.cacheId);
-          return {
-            ...a,
-            cacheName: cache ? getCacheName(cache, locale) : `Cache ${a.cacheId}`,
-          };
+          const cacheName = cache
+            ? getCacheName(cache, locale)
+            : `Cache ${a.cacheId}`;
+          console.log("[PROFILE][cache-lookup]", {
+            cacheId: a.cacheId,
+            cacheIdType: typeof a.cacheId,
+            foundCache: !!cache,
+            cacheName,
+          });
+          return { ...a, cacheName };
         });
         setAttestations(resolved);
       })

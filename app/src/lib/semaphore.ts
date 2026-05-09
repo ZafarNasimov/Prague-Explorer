@@ -78,7 +78,18 @@ export async function generateCacheProof(
 
   // snarkjs fetches the WASM + zkey from the PSE trusted-setup CDN.
   // No local files needed; the fetch happens transparently in the browser.
-  return generateProof(identity, group, message, scope);
+  console.log('[CLAIM][proof-start]', { cacheId, groupSize: groupMembers.length, scope: scope?.toString?.() ?? scope, message: message?.toString?.() });
+  const proof = await generateProof(identity, group, message, scope);
+  try {
+    console.log('[CLAIM][proof-success]', {
+      merkleTreeRoot: proof.merkleTreeRoot,
+      nullifier: proof.nullifier,
+      proofLength: Array.isArray((proof as unknown as { points?: unknown }).points) ? (proof as unknown as { points: unknown[] }).points.length : undefined,
+    });
+  } catch {
+    console.log('[CLAIM][proof-success] (partial)');
+  }
+  return proof;
 }
 
 /**

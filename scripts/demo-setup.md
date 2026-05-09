@@ -20,17 +20,15 @@ cast --version        # Foundry 1.7.x
 
 Accounts needed (create all before demo day):
 - [ ] **Privy**: https://console.privy.io → new app → copy App ID
-- [ ] **Pimlico**: https://dashboard.pimlico.io → new app → copy API key (free tier)
 - [ ] **Scrollscan**: https://scrollscan.com → register → API Keys → create key (free)
 
 ### ETH amounts needed on Scroll Sepolia
 
 | Wallet | Amount | Purpose |
 |---|---|---|
-| Deployer | **0.05 ETH** | Contract deployment + 6 cache registrations + EAS schema. Faucet: https://sepolia-faucet.scroll.io |
-| Demo user (1 per tester) | **0.01 ETH** | Optional tip donations via EOA path. Claim itself is free (paymaster). Same faucet. |
+| Deployer | **2+ ETH** | Contract deployment + cache registrations + EAS schema + auto-funding ~100 users × 0.002 ETH. Faucet: https://sepolia-faucet.scroll.io |
+| Demo user (1 per tester) | **0 ETH** | Wallet is auto-funded by the deployer on first login. |
 | 6 beneficiary wallets | **0 ETH** | Receive-only demo addresses. No funding needed. |
-| Pimlico paymaster | **0 ETH** | Free tier covers 950 sponsored UserOps/month. No ETH deposit needed. |
 
 ---
 
@@ -70,7 +68,6 @@ Edit `.env` with all values (used by Foundry deploy scripts):
 ```env
 NEXT_PUBLIC_SCROLL_SEPOLIA_RPC=https://sepolia-rpc.scroll.io
 NEXT_PUBLIC_PRIVY_APP_ID=<from console.privy.io>
-NEXT_PUBLIC_PIMLICO_API_KEY=<from dashboard.pimlico.io>
 DEPLOYER_PRIVATE_KEY=<deployer wallet private key — never commit>
 DEPLOYER_ADDRESS=<deployer wallet address>
 SCROLLSCAN_API_KEY=<from scrollscan.com>
@@ -81,12 +78,13 @@ NEXT_PUBLIC_EAS_SCHEMA_UID=
 NEXT_PUBLIC_SEMAPHORE_ADDRESS=
 ```
 
-Edit `app/.env.local` with the `NEXT_PUBLIC_*` vars only (no private key in the Next.js env file):
+Edit `app/.env.local` with the `NEXT_PUBLIC_*` vars and the deployer vars (used by the `/api/fund-wallet` server route):
 
 ```env
 NEXT_PUBLIC_SCROLL_SEPOLIA_RPC=https://sepolia-rpc.scroll.io
 NEXT_PUBLIC_PRIVY_APP_ID=<same as above>
-NEXT_PUBLIC_PIMLICO_API_KEY=<same as above>
+DEPLOYER_PRIVATE_KEY=<same deployer private key — server-side only, never shipped to browser>
+DEPLOYER_ADDRESS=<deployer wallet address>
 
 # Leave blank until after deploy:
 NEXT_PUBLIC_PRAGUE_EXPLORER_ADDRESS=
@@ -194,7 +192,7 @@ Expected output:
 ✓  Contract deployed     0x...
 ✓  Semaphore deployed    0x...
 ✓  All 6 caches          all 6 registered
-✓  Pimlico paymaster     healthy (EP 0.7 supported)
+✓  Deployer balance      0.5000 ETH
 ✓  Privy app ID          configured (clp12345…)
 ✓  EAS schema UID        0x1a2b3c4d…
 ✓  Beneficiary addrs     6/6 non-zero (demo addresses, private keys discarded)
@@ -240,8 +238,8 @@ cd app && pnpm dev
 3. Open `scripts/qr-secrets.json`, find `caches[0].qrValue` (looks like `1:a3f7c2...`). Paste that exact string into the manual code entry field. If the value doesn't start with a number followed by a colon, you're looking at the wrong field — `qrSecret` is the raw secret, `qrValue` is what the QR encodes.
 4. Answer the 3 quiz questions
 5. Wait for ZK proof generation (3–10 seconds; "Still working" message is normal on mobile)
-6. On the confirm screen: verify PaymasterStatus pill shows **"Gas free"** (green dot, top-right corner)
-7. Click **Confirm**
+6. Click **Confirm** on the confirm screen
+7. Wait for submission (wallet pays gas from the pre-funded balance)
 8. Verify success screen shows "Vyšehrad Fortress" and the green checkmark
 
 **8.4 Donation flow — DO NOT SKIP even if pressed for time.**
@@ -266,17 +264,16 @@ If any substep fails, stop and debug before proceeding.
 
 ---
 
-## 9. Pimlico paymaster — notes only, no action needed
+## 9. Deployer balance — monitor during the event
 
-The free tier sponsors up to **950 UserOps/month** on Scroll Sepolia at no cost. No ETH deposit is required.
+The deployer auto-funds each new embedded wallet with **0.002 ETH** on first login (capped at 100 wallets total, 1 fund per address per hour).
 
-**Quota math for EthPrague:**
-- 100 attendees × 3 caches each = 300 `claimCache` UserOps + up to 300 `joinCache` UserOps
-- Total: ~600 UserOps → fits within 950 with buffer
+**Budget math for EthPrague:**
+- 100 attendees × 0.002 ETH = 0.2 ETH for auto-funding
+- Add deployment costs + registration gas: ~0.05 ETH
+- Recommended deployer balance before the event: **≥ 0.5 ETH**
 
-**Monitor usage during the event:** https://dashboard.pimlico.io → your app → Usage.
-
-**If quota exhausts mid-demo:** the PaymasterStatus pill turns gray and the confirm button reads "Continue (wallet pays gas)". Users still claim successfully — they just pay a small testnet gas fee. This is the designed fail-open behavior; no action required.
+**If the deployer runs low mid-event:** the `/api/fund-wallet` route returns `deployer_low` and users may not receive auto-funding. Users who already received funding (localStorage guard `pe:funding-tried:{address}`) are unaffected. Top up the deployer wallet via faucet or a transfer from another wallet.
 
 ---
 
@@ -291,7 +288,6 @@ cd app && npx tsx ../scripts/health-check.ts
 Then manually verify:
 
 - [ ] http://localhost:3000/en loads without console errors
-- [ ] PaymasterStatus pill shows **"Gas free"** (green dot)
 - [ ] Map renders with all 6 cache markers visible
 - [ ] Navigating to `/en/cache/1` shows the QR scan screen
 - [ ] Profile page loads (attestation list, even if empty)
@@ -314,7 +310,7 @@ Record **Saturday night** after step 8 succeeds. A 90-second recording of the ex
 | 2 | Navigate to Cache 1, enter QR code manually | 10 s |
 | 3 | Answer quiz questions | 10 s |
 | 4 | Watch ZK proof generate — narrate: *"running privately in the browser"* | 10 s |
-| 5 | Confirm — show "Gas free" pill | 5 s |
+| 5 | Click Confirm — narrate: *"wallet was pre-funded, no action from user"* | 5 s |
 | 6 | Success screen | 5 s |
 | 7 | Profile — show the on-chain attestation | 10 s |
 | 8 | Leaderboard — show name appearing | 5 s |
@@ -347,7 +343,6 @@ Say: *"Let me show you the recording from last night's test run."* Play it witho
 | Scroll Sepolia chain ID | 534351 |
 | EAS contract | `0xaEF4103A04090071165F78D45D83A0C0782c2B2a` |
 | EAS Schema Registry | `0x55D26f9ae0203EF95494AE4C170eD35f4Cf77797` |
-| EntryPoint 0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` |
 | Vyšehrad beneficiary | `0x7B98698fc5F430b9f4b51691ed78Fe5a805902aB` |
 | Národní třída beneficiary | `0x8890e8f0D89bec707C99e80Ed4F0e463eb5B8E80` |
 | Staroměstské nám. beneficiary | `0xc8B427BE431bcD3a104070A629523a3b7EA8772c` |

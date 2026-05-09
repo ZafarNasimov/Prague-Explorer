@@ -13,7 +13,7 @@ This document covers what we protect, what we knowingly leak, and scaling limits
 | QR secret | Never transmitted to the contract or server |
 | Semaphore identity key | Derived client-side, never exported |
 | Cross-cache linkability | `scope = cacheId` — nullifiers are cache-scoped and uncorrelated on-chain |
-| Wallet ↔ claim linkage | `CacheClaimed` event does **not** index `msg.sender`; EAS recipient is the smart account (not the Privy auth identity) |
+| Wallet ↔ claim linkage | `CacheClaimed` event does **not** index `msg.sender`; EAS recipient is the embedded wallet (not the Privy auth identity) |
 
 ---
 
@@ -38,7 +38,7 @@ The QR secret is the sole gate on physical presence. Anyone with knowledge of th
 **What this attack does NOT break:** even if the secret is shared, the ZK identity is derived from `keccak256(privyUserId || qrSecret)`. Each Privy user ID produces a distinct identity commitment. Sharing the QR secret does not allow claim replay or nullifier collision — each unauthorized claimer still submits their own distinct proof. The privacy properties (unlinkability across caches, no identity exposure) are unaffected.
 
 ### EAS attestation recipient
-The EAS attestation recipient is `msg.sender` (the smart account address). This is required so users can look up their own attestations by address. It creates a weak link: an observer knows the smart account has claimed cache X, but cannot link it to an email/identity without additional data.
+The EAS attestation recipient is `msg.sender` (the user's embedded wallet address). This is required so users can look up their own attestations by address. It creates a weak link: an observer knows the wallet has claimed cache X, but cannot link it to an email/identity without additional data.
 
 ---
 
@@ -49,11 +49,11 @@ The EAS attestation recipient is `msg.sender` (the smart account address). This 
 - Replace with `getTopN(uint256 n)` with a loop cap
 - Or use an off-chain indexer (EAS subgraph, custom event indexer)
 
-### Pimlico free tier
-The Pimlico free tier allows ~950 sponsored UserOperations per month. A fully-attended EthPrague with 100 participants each claiming 3 caches = 600 UserOps (joinCache + claimCache). This fits the quota but leaves no buffer. The UI falls back to user-pays-gas silently if the quota is exceeded; see `src/lib/smartAccount.ts`.
+### Deployer funding model
+On first login the deployer auto-funds each embedded wallet with 0.002 ETH (via `/api/fund-wallet`). This covers the gas for `joinCache` + `claimCache` with margin. The deployer wallet must be monitored and topped up before the event. With 100 attendees × 3 caches, the total cost is approximately 0.6–0.8 ETH on Scroll Sepolia. The health check reports the deployer balance; see `scripts/health-check.ts`.
 
 ### Semaphore group member fetch
-`fetchGroupMembers` reads `MemberAdded` events from block 0 via `getLogs`. This works for a fresh testnet contract but will become slow as block depth grows. In production: maintain an off-chain cache of group members and serve via API route.
+`fetchGroupMembers` reads `MemberAdded` events in 5 000-block chunks from the PragueExplorer deploy block. Results are cached in localStorage (5-min TTL) and fetched incrementally. This is sufficient for EthPrague scale. In production: maintain an off-chain cache of group members and serve via API route.
 
 ---
 
@@ -68,5 +68,5 @@ The Pimlico free tier allows ~950 sponsored UserOperations per month. A fully-at
 - Smart contract upgradeability (intentionally non-upgradeable for demo)
 - Front-running attacks (display name is bound to proof at circuit level)
 - MEV / transaction reordering (nullifier double-spend prevented by Semaphore + local check)
-- Denial of service on Pimlico (fail-open: falls back to user-pays-gas)
+- Deployer wallet compromise (mitigated: minimal ETH balance, private key never in frontend bundle)
 - Compromised QR code at physical site (trusted deployer assumption for demo)

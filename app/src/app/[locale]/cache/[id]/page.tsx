@@ -19,7 +19,7 @@ import {
   readCacheGroupId,
 } from "@/lib/contract";
 import { fetchGroupMembers, readSemaphoreAddress } from "@/lib/group";
-import { checkPaymasterHealth } from "@/lib/smartAccount";
+import { checkAlreadyClaimed } from "@/lib/eas";
 
 type Step =
   | "scan"
@@ -28,6 +28,7 @@ type Step =
   | "confirm"
   | "submitting"
   | "success"
+  | "already-claimed"
   | "error";
 
 interface FlowState {
@@ -64,7 +65,6 @@ export default function CachePage() {
 
   const [state, setState] = useState<FlowState>(INITIAL);
   const [provingTooLong, setProvingTooLong] = useState(false);
-  const [paymasterHealthy, setPaymasterHealthy] = useState<boolean | null>(null);
   const [donationEth, setDonationEth] = useState("");
   const [donating, setDonating] = useState(false);
   const [donateTxHash, setDonateTxHash] = useState("");
@@ -74,6 +74,30 @@ export default function CachePage() {
 
   const cache = getCacheById(cacheId);
   const cacheName = cache ? getCacheName(cache, locale) : `Cache ${cacheId}`;
+
+  // ── Layer 1: pre-quiz already-claimed check ────────────────────────────────
+  // Queries EAS for an existing attestation before the user invests time in the
+  // quiz. Fails open (no UI change) so a network error never blocks a valid claim.
+
+  useEffect(() => {
+    if (!authenticated || !user?.wallet?.address) return;
+    const schemaUID = process.env.NEXT_PUBLIC_EAS_SCHEMA_UID ?? "";
+    if (!schemaUID) return;
+
+    checkAlreadyClaimed(cacheId, user.wallet.address, schemaUID)
+      .then((claimed) => {
+        if (claimed) {
+          console.log("[CACHE-PAGE] user has already claimed this cache — showing already-claimed state");
+          setState((s) =>
+            s.step === "scan" ? { ...s, step: "already-claimed" } : s
+          );
+        }
+      })
+      .catch((err) => {
+        console.warn("[CACHE-PAGE] failed to check claim status:", err);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated, user?.wallet?.address]);
 
   // ── QR validation ──────────────────────────────────────────────────────────
 
@@ -195,6 +219,7 @@ export default function CachePage() {
             : "";
         const displayName = storedName || "Explorer";
 
+        console.log('[CLAIM][page-statemachine] generating proof', { cacheId, displayName });
         const proof = await generateCacheProof(
           privyUserId,
           state.qrSecret,
@@ -203,12 +228,25 @@ export default function CachePage() {
           displayName
         );
 
+        console.log('[CLAIM][page-statemachine] proof generated', { cacheId, displayName });
         setState((s) => ({ ...s, step: "confirm", proof, displayName }));
       } catch (err) {
+        console.error('[CLAIM][page-statemachine] caught:', err);
+        const e2 = err as Error & { cause?: unknown };
+        console.error('[CLAIM][page-statemachine] error name:', e2?.name);
+        console.error('[CLAIM][page-statemachine] error message:', e2?.message);
+        console.error('[CLAIM][page-statemachine] error cause:', e2?.cause);
+        console.error('[CLAIM][page-statemachine] error stack:', e2?.stack);
+        try {
+          console.error('[CLAIM][page-statemachine] full JSON:', JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2));
+        } catch {
+          console.error('[CLAIM][page-statemachine] JSON stringify failed');
+        }
+        const errKey = mapContractError(err);
         setState((s) => ({
           ...s,
-          step: "error",
-          errorKey: mapContractError(err),
+          step: errKey === "errors.alreadyClaimed" ? "already-claimed" : "error",
+          errorKey: errKey,
         }));
       } finally {
         if (provingTimer.current) clearTimeout(provingTimer.current);
@@ -221,15 +259,6 @@ export default function CachePage() {
       if (provingTimer.current) clearTimeout(provingTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.step]);
-
-  // ── Paymaster health check ─────────────────────────────────────────────────
-  // Runs once when the confirm step is entered so we can warn the user if
-  // gas sponsorship is unavailable before they hit Confirm.
-
-  useEffect(() => {
-    if (state.step !== "confirm") return;
-    checkPaymasterHealth().then(setPaymasterHealthy);
   }, [state.step]);
 
   // ── Submitting ─────────────────────────────────────────────────────────────
@@ -255,10 +284,22 @@ export default function CachePage() {
           60_000
         );
       } catch (err) {
+        console.error('[CLAIM][page-statemachine] submit caught:', err);
+        const e2 = err as Error & { cause?: unknown };
+        console.error('[CLAIM][page-statemachine] submit error name:', e2?.name);
+        console.error('[CLAIM][page-statemachine] submit error message:', e2?.message);
+        console.error('[CLAIM][page-statemachine] submit error cause:', e2?.cause);
+        console.error('[CLAIM][page-statemachine] submit error stack:', e2?.stack);
+        try {
+          console.error('[CLAIM][page-statemachine] submit full JSON:', JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2));
+        } catch {
+          console.error('[CLAIM][page-statemachine] submit JSON stringify failed');
+        }
+        const errKey = mapContractError(err);
         setState((s) => ({
           ...s,
-          step: "error",
-          errorKey: mapContractError(err),
+          step: errKey === "errors.alreadyClaimed" ? "already-claimed" : "error",
+          errorKey: errKey,
         }));
       }
     }
@@ -364,18 +405,11 @@ export default function CachePage() {
   }
 
   if (state.step === "confirm") {
-    const paymasterDown = paymasterHealthy === false;
     return (
       <PageShell cacheName={cacheName}>
         <div className="mb-6 rounded-xl border border-zinc-700 bg-zinc-800/60 p-4 text-sm leading-relaxed text-zinc-300">
           {t("claim.summary", { cacheName })}
         </div>
-
-        {paymasterDown && (
-          <div className="mb-4 rounded-xl border border-amber-800 bg-amber-900/20 px-4 py-3 text-sm text-amber-300">
-            {t("claim.summaryFallback")}
-          </div>
-        )}
 
         <div className="mb-4">
           <p className="mb-1 text-xs text-zinc-400">{t("cache.displayNameLabel")}</p>
@@ -402,7 +436,7 @@ export default function CachePage() {
             onClick={() => setState((s) => ({ ...s, step: "submitting" }))}
             className="flex-1 rounded-xl bg-indigo-600 py-3 font-semibold text-white"
           >
-            {paymasterDown ? t("claim.continueFallback") : t("claim.confirm")}
+            {t("claim.confirm")}
           </button>
         </div>
       </PageShell>
@@ -506,6 +540,38 @@ export default function CachePage() {
             </button>
           </div>
         )}
+      </PageShell>
+    );
+  }
+
+  if (state.step === "already-claimed") {
+    return (
+      <PageShell cacheName={cacheName}>
+        <div className="flex flex-col items-center gap-6 py-8 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-500/20">
+            <CheckIcon className="h-8 w-8 text-indigo-400" />
+          </div>
+          <div>
+            <p className="text-lg font-semibold">{t("alreadyClaimed.title")}</p>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+              {t("alreadyClaimed.description", { cacheName })}
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-3">
+            <Link
+              href={`/${locale}/profile`}
+              className="w-full rounded-xl bg-indigo-600 py-3 text-center font-semibold text-white"
+            >
+              {t("alreadyClaimed.viewProfile")}
+            </Link>
+            <Link
+              href={`/${locale}`}
+              className="w-full rounded-xl border border-zinc-700 py-3 text-center text-sm text-zinc-300"
+            >
+              {t("alreadyClaimed.backToMap")}
+            </Link>
+          </div>
+        </div>
       </PageShell>
     );
   }

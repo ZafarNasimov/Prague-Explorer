@@ -47,11 +47,13 @@
     "donateError": "Odeslání se nezdařilo. Z vaší peněženky nic neodešlo."
   },
   "claim": {
-    "summary": "Získáváte ověření \"{cacheName}\". Poplatky za plyn jsou hrazeny — zdarma. Obdržíte 1 on-chain atestaci. Žádné osobní údaje nejsou sdíleny.",
-    "summaryFallback": "Sponzorování poplatků za plyn je dočasně nedostupné. Tato keš spotřebuje malé množství testovacích ETH z vaší peněženky.",
-    "continueFallback": "Pokračovat (gas z peněženky)",
+    "summary": "Získáváte ověření \"{cacheName}\". Poplatky za plyn jsou kryty — zdarma. Obdržíte 1 on-chain atestaci. Žádné osobní údaje nejsou sdíleny.",
     "confirm": "Potvrdit",
     "cancel": "Zrušit"
+  },
+  "funding": {
+    "justFunded": "Peněženka doplněna testovacími ETH na plyn.",
+    "error": "Peněženku se nepodařilo doplnit — pro ověření může být potřeba malé množství testovacích ETH."
   },
   "undo": {
     "message": "Keš získána. Vrátit do 60 sekund?",
@@ -69,6 +71,12 @@
     "rank": "Pořadí",
     "name": "Jméno",
     "claims": "Keše"
+  },
+  "alreadyClaimed": {
+    "title": "Tuto cache jste již prozkoumali",
+    "description": "Váš certifikát {cacheName} je již ve vašem profilu. Každou cache lze nárokovat pouze jednou na osobu — to je součást záruky soukromí.",
+    "viewProfile": "Zobrazit mé certifikáty",
+    "backToMap": "Zpět na mapu"
   },
   "errors": {
     "alreadyClaimed": "Tuto keš jste již získali. Zkontrolujte svůj profil.",

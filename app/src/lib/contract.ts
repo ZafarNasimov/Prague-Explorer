@@ -1,24 +1,22 @@
 // Contract ABI + transaction helpers.
 //
 // submitJoinCache and submitClaim are the ONLY places in the codebase that
-// write to the chain. They try the Pimlico ERC-4337 paymaster path first;
-// if the paymaster is unavailable or over-quota, they fall back to the user's
-// EOA paying gas directly (fail-open design).
+// write to the chain. The user's embedded EOA pays gas directly — wallets are
+// pre-funded by the /api/fund-wallet deployer route on first login.
 
 import {
   createPublicClient,
   createWalletClient,
   custom,
-  encodeFunctionData,
   http,
   parseEther,
   type Address,
   type EIP1193Provider,
 } from "viem";
+
 import { scrollSepolia } from "viem/chains";
 import { unpackProof } from "./semaphore";
 import type { SemaphoreProof } from "@semaphore-protocol/proof";
-import { buildSmartAccountClient } from "./smartAccount";
 
 export const PRAGUE_EXPLORER_ABI = [
   {
@@ -109,42 +107,8 @@ export async function submitJoinCache(
   walletAddress: Address,
   cacheId: bigint,
   identityCommitment: bigint
-): Promise<{ sponsored: boolean }> {
+): Promise<void> {
   console.log("[CLAIM][submitJoinCache] start", { cacheId: cacheId.toString(), walletAddress });
-
-  // Sponsored path
-  try {
-    const { smartAccountClient, pimlicoClient } = await buildSmartAccountClient(provider, walletAddress);
-    console.log("[CLAIM][submitJoinCache] smart account built, sending UserOp");
-    const userOpHash = await smartAccountClient.sendUserOperation({
-      calls: [{
-        to: getContractAddress(),
-        data: encodeFunctionData({
-          abi: PRAGUE_EXPLORER_ABI,
-          functionName: "joinCache",
-          args: [cacheId, identityCommitment],
-        }),
-        value: 0n,
-      }],
-    });
-    console.log("[CLAIM][submitJoinCache] UserOp sent:", userOpHash);
-    const receipt = await pimlicoClient.waitForUserOperationReceipt({ hash: userOpHash });
-    console.log("[CLAIM][submitJoinCache] UserOp receipt:", {
-      success: (receipt as any)?.success,
-      receipt: (receipt as any)?.receipt,
-    });
-    return { sponsored: true };
-  } catch (err) {
-    console.error("[CLAIM][submitJoinCache] Pimlico path failed — falling to EOA");
-    console.error("[CLAIM][submitJoinCache] error name:", (err as any)?.name);
-    console.error("[CLAIM][submitJoinCache] error message:", (err as any)?.message);
-    console.error("[CLAIM][submitJoinCache] error cause:", (err as any)?.cause);
-    console.error("[CLAIM][submitJoinCache] error stack:", (err as any)?.stack);
-    console.error("[CLAIM][submitJoinCache] full JSON:", JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2));
-  }
-
-  // EOA fallback
-  console.warn("[CLAIM][submitJoinCache] [fallback-to-eoa] attempting EOA writeContract");
   const { publicClient, walletClient } = makeClients(provider, walletAddress);
   const hash = await walletClient.writeContract({
     address: getContractAddress(),
@@ -152,17 +116,17 @@ export async function submitJoinCache(
     functionName: "joinCache",
     args: [cacheId, identityCommitment],
   });
-  console.log("[CLAIM][submitJoinCache] EOA tx hash:", hash);
+  console.log("[CLAIM][submitJoinCache] tx hash:", hash);
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
-  console.log("[CLAIM][submitJoinCache] EOA receipt:", {
+  console.log("[CLAIM][submitJoinCache] receipt:", {
     status: receipt.status,
     blockNumber: receipt.blockNumber?.toString(),
     gasUsed: receipt.gasUsed?.toString(),
   });
   if (receipt.status === "reverted") {
-    console.error("[CLAIM][submitJoinCache] [onchain-revert] EOA tx reverted", receipt);
+    console.error("[CLAIM][submitJoinCache] [onchain-revert] tx reverted", receipt);
+    throw new Error("joinCache reverted on-chain");
   }
-  return { sponsored: false };
 }
 
 export interface ClaimParams {
@@ -175,39 +139,12 @@ export async function submitClaim(
   provider: EIP1193Provider,
   walletAddress: Address,
   params: ClaimParams
-): Promise<{ sponsored: boolean }> {
+): Promise<void> {
   const unpacked = unpackProof(params.proof);
-
-  // Sponsored path — v1 frontend never sends msg.value.
-  // claimCache is payable for v2 contract-mediated donations; not used here.
-  try {
-    const { smartAccountClient, pimlicoClient } = await buildSmartAccountClient(provider, walletAddress);
-    const userOpHash = await smartAccountClient.sendUserOperation({
-      calls: [{
-        to: getContractAddress(),
-        data: encodeFunctionData({
-          abi: PRAGUE_EXPLORER_ABI,
-          functionName: "claimCache",
-          args: [
-            params.cacheId,
-            unpacked.merkleTreeDepth,
-            unpacked.merkleTreeRoot,
-            unpacked.nullifier,
-            unpacked.points,
-            params.displayName,
-          ],
-        }),
-        value: 0n,
-      }],
-    });
-    await pimlicoClient.waitForUserOperationReceipt({ hash: userOpHash });
-    return { sponsored: true };
-  } catch {
-    // Paymaster unavailable — fall through to EOA
-  }
-
-  // EOA fallback
   const { publicClient, walletClient } = makeClients(provider, walletAddress);
+
+  console.log('[CLAIM][submitClaim] start', { from: walletAddress, to: getContractAddress(), cacheId: params.cacheId.toString() });
+
   const hash = await walletClient.writeContract({
     address: getContractAddress(),
     abi: PRAGUE_EXPLORER_ABI,
@@ -221,8 +158,18 @@ export async function submitClaim(
       params.displayName,
     ],
   });
-  await publicClient.waitForTransactionReceipt({ hash });
-  return { sponsored: false };
+  console.log('[CLAIM][submitClaim] tx hash:', hash);
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  console.log('[CLAIM][submitClaim] receipt:', {
+    status: receipt.status,
+    blockNumber: receipt.blockNumber?.toString(),
+    gasUsed: receipt.gasUsed?.toString(),
+    effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
+  });
+  if (receipt.status === 'reverted') {
+    console.error('[CLAIM][submitClaim] [onchain-revert] tx reverted on-chain', receipt);
+    throw new Error("claimCache reverted on-chain");
+  }
 }
 
 /** Direct ETH transfer from the user's wallet to a beneficiary address. */

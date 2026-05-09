@@ -35,14 +35,13 @@ function loadEnv() {
 
 loadEnv();
 
-const RPC   = process.env.NEXT_PUBLIC_SCROLL_SEPOLIA_RPC ?? "https://sepolia-rpc.scroll.io";
-const PIMLICO_KEY   = process.env.NEXT_PUBLIC_PIMLICO_API_KEY ?? "";
-const CONTRACT_ADDR = process.env.NEXT_PUBLIC_PRAGUE_EXPLORER_ADDRESS ?? "";
-const SCHEMA_UID    = process.env.NEXT_PUBLIC_EAS_SCHEMA_UID ?? "";
-const PRIVY_APP_ID  = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
+const RPC            = process.env.NEXT_PUBLIC_SCROLL_SEPOLIA_RPC ?? "https://sepolia-rpc.scroll.io";
+const CONTRACT_ADDR  = process.env.NEXT_PUBLIC_PRAGUE_EXPLORER_ADDRESS ?? "";
+const SCHEMA_UID     = process.env.NEXT_PUBLIC_EAS_SCHEMA_UID ?? "";
+const PRIVY_APP_ID   = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
 const SEMAPHORE_ADDR = process.env.NEXT_PUBLIC_SEMAPHORE_ADDRESS ?? "";
+const DEPLOYER_ADDR  = process.env.DEPLOYER_ADDRESS ?? "";
 
-const EP_07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
 const CHAIN_ID = 534351;
 
 // ── Known beneficiary addresses (from caches.ts) ─────────────────────────────
@@ -140,15 +139,16 @@ async function checkCachesRegistered(): Promise<Result> {
   }
 }
 
-async function checkPimlico(): Promise<Result> {
-  if (!PIMLICO_KEY) return fail("NEXT_PUBLIC_PIMLICO_API_KEY not set");
-  const url = `https://api.pimlico.io/v2/${CHAIN_ID}/rpc?apikey=${PIMLICO_KEY}`;
+async function checkDeployerBalance(): Promise<Result> {
+  if (!DEPLOYER_ADDR) return fail("DEPLOYER_ADDRESS not set");
   try {
-    const result = await rpcCall(url, "pm_supportedEntryPoints", [], 5000) as string[];
-    if (!Array.isArray(result)) return fail("unexpected response");
-    const supported = result.some(ep => ep.toLowerCase() === EP_07.toLowerCase());
-    if (!supported) return fail(`EP 0.7 not in supported list: ${result.join(", ")}`);
-    return pass("healthy (EP 0.7 supported)");
+    const balHex = await rpcCall(RPC, "eth_getBalance", [DEPLOYER_ADDR, "latest"]) as string;
+    const wei = BigInt(balHex);
+    const eth = Number(wei) / 1e18;
+    const fmt = eth.toFixed(4);
+    if (wei < 10_000_000_000_000_000n) return fail(`${fmt} ETH — top up immediately (< 0.01 ETH)`);
+    if (wei < 50_000_000_000_000_000n) return { ok: true, detail: `WARN — ${fmt} ETH (< 0.05 ETH, top up soon)` };
+    return pass(`${fmt} ETH`);
   } catch (e) {
     return fail(String(e));
   }
@@ -198,7 +198,7 @@ const CHECKS: [string, () => Promise<Result> | Result][] = [
   ["Contract deployed   ", checkContractDeployed],
   ["Semaphore deployed  ", checkSemaphore],
   ["All 6 caches        ", checkCachesRegistered],
-  ["Pimlico paymaster   ", checkPimlico],
+  ["Deployer balance    ", checkDeployerBalance],
   ["Privy app ID        ", checkPrivy],
   ["EAS schema UID      ", checkEasSchema],
   ["Beneficiary addrs   ", checkBeneficiaries],

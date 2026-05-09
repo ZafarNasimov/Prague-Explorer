@@ -64,9 +64,9 @@ This is not a property we added on top of Semaphore — it is Semaphore's core d
 
 When a user completes the quiz and begins proof generation, their identity commitment is added to the Semaphore Merkle tree via `joinCache`. This transaction is public: an observer sees "someone is preparing to claim cache X."
 
-The identity commitment itself reveals nothing about the user — it is the output of a Poseidon hash of the identity secret. But the transaction is gas-funded via the Pimlico ERC-4337 paymaster, which means the gas payer is the paymaster contract, not the user's wallet. This decouples the funding identity from the identity being registered.
+The identity commitment itself reveals nothing about the user — it is the output of a Poseidon hash of the identity secret.
 
-Residual leak: the user's smart account address initiates the `joinCache` UserOperation. An observer with access to bundler mempool data could potentially correlate the smart account with the `joinCache` transaction. In production, this would be mitigated by routing through a mixing relay.
+The `joinCache` transaction is submitted directly from the user's embedded EOA wallet (pre-funded by the deployer on first login). An observer can see that a particular wallet address registered an identity commitment for cache X. In production, this would be mitigated by routing through a mixing relay or relay contract that decouples the funding identity from the commitment being registered.
 
 ---
 
@@ -88,7 +88,7 @@ Display names are user-chosen strings. There is no verification. Anyone can clai
 
 ### EAS attestation address linkage
 
-The EAS attestation recipient is `msg.sender` — the user's Kernel smart account address. This is necessary so users can look up their own attestations. It creates a weak link between a wallet address and a specific cache claim. An observer who knows a wallet address can see which caches that address has claimed, but cannot link the wallet address to an email, name, or Privy identity without additional data.
+The EAS attestation recipient is `msg.sender` — the user's embedded wallet address (a Privy-managed EOA). This is necessary so users can look up their own attestations. It creates a weak link between a wallet address and a specific cache claim. An observer who knows a wallet address can see which caches that address has claimed, but cannot link the wallet address to an email, name, or Privy identity without additional data.
 
 ---
 
@@ -96,11 +96,11 @@ The EAS attestation recipient is `msg.sender` — the user's Kernel smart accoun
 
 Post-claim tip donations are a direct ETH transfer from the user's embedded wallet to the cache's beneficiary address. This is a separate transaction, not part of the ZK claim. The donation is:
 
-- **Optional** — the claim is always free and always sponsored
+- **Optional** — the claim is always free (deployer pre-funds the wallet)
 - **User-initiated** — the user explicitly enters an amount and confirms
 - **Honest** — the UI says "you pay a small gas fee" because you do
 
-The claim transaction never carries `msg.value`. Gas sponsorship covers 100% of the claim cost. Tip donations are the user's choice to make after they have already received their attestation.
+The claim transaction never carries `msg.value`. Gas fees are covered by the pre-funded embedded wallet. Tip donations are the user's choice to make after they have already received their attestation.
 
 ---
 
@@ -111,8 +111,8 @@ The claim transaction never carries `msg.value`. Gas sponsorship covers 100% of 
 | Claim unlinkable to identity | ✓ | Nullifier opaque; msg.sender not indexed |
 | Cross-cache unlinkability | ✓ | Scope-separated nullifiers |
 | Identity never leaves browser | ✓ | Client-side derivation only |
-| Gas payer ≠ claimer | ✓ | Pimlico paymaster covers gas |
+| Gas payer ≠ claimer | ~ | Deployer pre-funds wallet; EOA address is the gas payer and also the sender |
 | Physical presence required | ~ | QR sharing is possible; no hardware attestation in v1 |
 | Display name verified | ✗ | Free-text; ENS required for v2 |
-| EAS attestation is anonymous | ~ | Smart account address is public; not linked to auth identity |
+| EAS attestation is anonymous | ~ | Embedded wallet address is public; not linked to auth identity |
 | Claim is free | ✓ | msg.value is always 0 in v1 frontend |
