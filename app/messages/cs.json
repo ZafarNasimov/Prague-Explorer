@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "map": "Mapa",
+    "leaderboard": "Žebříček",
+    "profile": "Profil"
+  },
+  "map": {
+    "title": "Prague Explorer",
+    "subtitle": "Prozkoumej Prahu. Získej ověření.",
+    "startCache": "Začít",
+    "cacheCount": "{count} keší"
+  },
+  "cache": {
+    "scanTitle": "Naskenujte QR kód",
+    "scanPrompt": "Naskenujte QR kód u keše",
+    "manualEntry": "Nelze skenovat? Zadejte kód ručně.",
+    "manualPlaceholder": "Zadejte tajný kód",
+    "manualSubmit": "Potvrdit kód",
+    "quizTitle": "Kvíz o místě",
+    "quizProgress": "Otázka {current} ze {total}",
+    "submitAnswer": "Odeslat odpověď",
+    "correct": "Správně!",
+    "incorrect": "Špatná odpověď, zkuste to znovu.",
+    "allCorrect": "Výborně! Všechny odpovědi správné.",
+    "provingTitle": "Generuji váš soukromý důkaz…",
+    "provingSubtitle": "Probíhá ve vašem prohlížeči, soukromě (∼3 s)",
+    "provingMobile": "Stále pracuji — na mobilu to může trvat déle, to je normální.",
+    "generatingProof": "Generování důkazu… probíhá ve vašem prohlížeči, soukromě (∼3 s)",
+    "confirmTitle": "Potvrdit získání keše",
+    "displayNameLabel": "Vaše zobrazované jméno",
+    "donationLabel": "Volitelný příspěvek (ETH)",
+    "donationPlaceholder": "0.000",
+    "submitting": "Odesílání…",
+    "success": "Keš úspěšně získána!",
+    "alreadyClaimed": "Tuto keš jste již získali.",
+    "wrongNetwork": "Přepněte síť na Scroll Sepolia.",
+    "proofFailed": "Ověření selhalo. Zkuste to znovu.",
+    "unknownError": "Něco se pokazilo. Zkuste to znovu.",
+    "wrongQr": "Tento QR kód patří jiné keši. Naskenujte kód u správné keše.",
+    "wrongQrFor": "QR kód nepatří keši \"{cacheName}\". Zkuste naskenovat znovu.",
+    "tryAgain": "Zkusit znovu",
+    "donatePrompt": "Tato keš podporuje instituci {institution}. Chcete přispět?",
+    "donateGasNote": "Příspěvek jde přímo instituci. Zaplatíte malý poplatek za plyn — vaše ověření bylo zdarma.",
+    "donateSend": "Poslat {amount} ETH",
+    "donateSending": "Odesílání…",
+    "donateSuccess": "Příspěvek odeslán. Děkujeme.",
+    "donateError": "Odeslání se nezdařilo. Z vaší peněženky nic neodešlo."
+  },
+  "claim": {
+    "summary": "Získáváte ověření \"{cacheName}\". Poplatky za plyn jsou hrazeny — zdarma. Obdržíte 1 on-chain atestaci. Žádné osobní údaje nejsou sdíleny.",
+    "summaryFallback": "Sponzorování poplatků za plyn je dočasně nedostupné. Tato keš spotřebuje malé množství testovacích ETH z vaší peněženky.",
+    "continueFallback": "Pokračovat (gas z peněženky)",
+    "confirm": "Potvrdit",
+    "cancel": "Zrušit"
+  },
+  "undo": {
+    "message": "Keš získána. Vrátit do 60 sekund?",
+    "undo": "Vrátit"
+  },
+  "profile": {
+    "title": "Moje ověření",
+    "noAttestations": "Zatím žádná ověření. Najděte první keš!",
+    "exportWallet": "Exportovat klíč peněženky",
+    "displayName": "Zobrazované jméno",
+    "editName": "Upravit"
+  },
+  "leaderboard": {
+    "title": "Žebříček",
+    "rank": "Pořadí",
+    "name": "Jméno",
+    "claims": "Keše"
+  },
+  "errors": {
+    "alreadyClaimed": "Tuto keš jste již získali. Zkontrolujte svůj profil.",
+    "wrongNetwork": "Přepněte síť na Scroll Sepolia.",
+    "proofFailed": "Ověření důkazu selhalo. Zkuste to znovu?",
+    "quizWrong": "Špatná odpověď. Zkusit tuto otázku znovu?",
+    "txReverted": "Transakce selhala. To je naše chyba, ne vaše. Zkuste to za chvíli.",
+    "noWallet": "Peněženka nenalezena. Přihlaste se e-mailem nebo přes Google.",
+    "wrongQr": "Nesprávný QR kód pro tuto keš.",
+    "generic": "Něco se pokazilo. Zkuste to znovu."
+  }
+}

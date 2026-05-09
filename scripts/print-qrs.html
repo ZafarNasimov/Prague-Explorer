@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prague Explorer — QR Codes for Printing</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #f5f5f5;
+    }
+
+    /* ── Load screen ── */
+    #loader {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: #fff; gap: 16px; z-index: 100;
+    }
+    #loader p { font-size: 15px; color: #444; }
+    #file-fallback { display: none; text-align: center; }
+    #file-fallback label {
+      display: inline-block; margin-top: 8px;
+      padding: 8px 20px; background: #1a1a2e; color: #fff;
+      border-radius: 6px; cursor: pointer; font-size: 14px;
+    }
+    #file-fallback input { display: none; }
+    #error-msg { color: #c00; font-size: 14px; margin-top: 8px; }
+
+    /* ── Print pages ── */
+    #pages { display: none; }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      padding: 18mm 20mm;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #1a1a2e;
+      padding-bottom: 8px;
+    }
+    .logo-text {
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #1a1a2e;
+      text-transform: uppercase;
+    }
+    .event-text {
+      font-size: 11px;
+      color: #666;
+      text-align: right;
+    }
+
+    .names {
+      text-align: center;
+      flex: 0;
+    }
+    .name-en {
+      font-size: 26px;
+      font-weight: bold;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+    .name-cz {
+      font-size: 16px;
+      color: #555;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .qr-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
+    .qr-container canvas,
+    .qr-container img {
+      width: 150mm !important;
+      height: 150mm !important;
+    }
+
+    .footer {
+      width: 100%;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+      text-align: center;
+    }
+    .footer-main {
+      font-size: 13px;
+      color: #1a1a2e;
+      font-weight: bold;
+      letter-spacing: 0.3px;
+    }
+    .footer-sub {
+      font-size: 11px;
+      color: #888;
+      margin-top: 3px;
+    }
+    .cache-id {
+      font-size: 10px;
+      color: #bbb;
+      margin-top: 6px;
+      font-family: monospace;
+    }
+
+    /* ── Screen preview toolbar ── */
+    #toolbar {
+      display: none;
+      position: fixed;
+      bottom: 20px; right: 20px;
+      background: #1a1a2e; color: #fff;
+      padding: 10px 18px; border-radius: 8px;
+      font-family: sans-serif; font-size: 13px;
+      gap: 12px; align-items: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      z-index: 99;
+    }
+    #toolbar button {
+      background: #fff; color: #1a1a2e;
+      border: none; padding: 6px 14px;
+      border-radius: 5px; cursor: pointer;
+      font-size: 13px; font-weight: bold;
+    }
+    #preview-label { font-size: 12px; color: #aaa; }
+
+    @media print {
+      body { background: #fff; }
+      #loader, #toolbar { display: none !important; }
+      #pages { display: block !important; }
+      .page { margin: 0; border: none; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Load screen -->
+<div id="loader">
+  <div style="font-size:22px; font-weight:bold; color:#1a1a2e;">Prague Explorer</div>
+  <p id="loader-msg">Loading QR secrets from qr-secrets.json…</p>
+  <div id="file-fallback">
+    <p style="color:#888; font-size:13px; margin-bottom:8px;">
+      Could not fetch qr-secrets.json automatically.<br>
+      Serve this file with a local HTTP server, or select the file manually:
+    </p>
+    <label>
+      Select qr-secrets.json
+      <input type="file" id="jsonFile" accept=".json">
+    </label>
+    <p id="error-msg"></p>
+  </div>
+</div>
+
+<!-- Print pages (populated by JS) -->
+<div id="pages"></div>
+
+<!-- Screen toolbar -->
+<div id="toolbar">
+  <span id="preview-label"></span>
+  <button onclick="window.print()">Print all 6 pages</button>
+</div>
+
+<script>
+  // ── Config ────────────────────────────────────────────────────────────────
+
+  const QR_SIZE = 440; // px — renders at 150mm when printed at ~75 DPI
+
+  // ── Render pages from loaded JSON data ────────────────────────────────────
+
+  function renderPages(data) {
+    const pages = document.getElementById('pages');
+    pages.innerHTML = '';
+
+    let previews = [];
+
+    for (const cache of data.caches) {
+      const page = document.createElement('div');
+      page.className = 'page';
+
+      page.innerHTML = `
+        <div class="header">
+          <div class="logo-text">Prague Explorer</div>
+          <div class="event-text">EthPrague 2026<br>Scroll Sepolia · Semaphore ZK</div>
+        </div>
+
+        <div class="names">
+          <div class="name-en">${escHtml(cache.nameEn)}</div>
+          <div class="name-cz">${escHtml(cache.nameCz)}</div>
+        </div>
+
+        <div class="qr-container" id="qr-${cache.id}"></div>
+
+        <div class="footer">
+          <div class="footer-main">Scan here to prove your visit.</div>
+          <div class="footer-sub">Your location proof is private. No data leaves your phone.</div>
+          <div class="cache-id">Cache ${cache.id} · Preview: ${escHtml(cache.secretPreview)}…</div>
+        </div>
+      `;
+
+      pages.appendChild(page);
+
+      // Generate QR code
+      new QRCode(document.getElementById(`qr-${cache.id}`), {
+        text: cache.qrValue,
+        width: QR_SIZE,
+        height: QR_SIZE,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+
+      previews.push(`Cache ${cache.id}: ${cache.secretPreview}…`);
+    }
+
+    // Show pages and toolbar
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('pages').style.display = 'block';
+    document.getElementById('toolbar').style.display = 'flex';
+    document.getElementById('preview-label').textContent =
+      `${data.caches.length} codes ready · Previews: ${previews.join(', ')}`;
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Load qr-secrets.json ──────────────────────────────────────────────────
+
+  async function loadFromFetch() {
+    const res = await fetch('./qr-secrets.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  function loadFromFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try { resolve(JSON.parse(e.target.result)); }
+        catch (err) { reject(err); }
+      };
+      reader.onerror = () => reject(new Error('File read error'));
+      reader.readAsText(file);
+    });
+  }
+
+  // Try fetch first; if it fails (file:// protocol or 404), show file picker
+  loadFromFetch()
+    .then(data => renderPages(data))
+    .catch(() => {
+      document.getElementById('loader-msg').style.display = 'none';
+      document.getElementById('file-fallback').style.display = 'block';
+    });
+
+  document.getElementById('jsonFile').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const data = await loadFromFile(file);
+      renderPages(data);
+    } catch (err) {
+      document.getElementById('error-msg').textContent =
+        `Error reading file: ${err.message}`;
+    }
+  });
+</script>
+</body>
+</html>

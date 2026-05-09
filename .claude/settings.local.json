@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\zafar\\\\OneDrive\\\\Desktop\\\\EthPrague2026\" -Recurse -Force)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\zafar\\\\OneDrive\\\\Desktop\\\\EthPrague2026\" -Recurse -Force -File | Select-Object FullName | ForEach-Object { $_.FullName -replace [regex]::Escape\\(\"C:\\\\Users\\\\zafar\\\\OneDrive\\\\Desktop\\\\EthPrague2026\\\\\"\\), \".\" } | Sort-Object)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\zafar\\\\OneDrive\\\\Desktop\\\\EthPrague2026\" -Recurse -Force -File | ForEach-Object { $_.FullName -replace [regex]::Escape\\(\"C:\\\\Users\\\\zafar\\\\OneDrive\\\\Desktop\\\\EthPrague2026\\\\\"\\), \".\" } | Sort-Object)",
+      "Bash(pnpm --version)",
+      "Bash(forge --version)",
+      "Bash(git --version)",
+      "Bash(curl -L https://foundry.paradigm.xyz)",
+      "Bash(bash)",
+      "Bash(/c/Users/zafar/.foundry/bin/foundryup *)",
+      "Bash(/c/Users/zafar/.foundry/bin/forge init *)",
+      "WebFetch(domain:docs.pimlico.io)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebSearch",
+      "Read(//c/c/Users/zafar/OneDrive/Desktop/**)",
+      "Read(//c/c/Users/zafar/OneDrive/Desktop/EthPrague2026/**)",
+      "Bash(/c/Users/zafar/.foundry/bin/forge build *)",
+      "Bash(/c/Users/zafar/.foundry/bin/forge test *)",
+      "WebFetch(domain:docs.attest.sh)",
+      "WebFetch(domain:docs.attest.org)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(/c/Users/zafar/.foundry/bin/cast to-check-sum-address *)",
+      "Bash(pnpm build *)",
+      "Bash(Get-Content \"C:\\\\Users\\\\zafar\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-zafar-OneDrive-Desktop-EthPrague2026\\\\f440d1f5-86bc-461e-ac26-3321af53b644\\\\tasks\\\\b1tjjbhu1.output\" -Wait)",
+      "Bash(Select-String -Pattern \"compiled|error|Error|failed|Failed|warning|Route|Generating\")",
+      "Bash(Start-Sleep -Seconds 30)",
+      "Bash(Get-Content \"C:\\\\Users\\\\zafar\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-zafar-OneDrive-Desktop-EthPrague2026\\\\f440d1f5-86bc-461e-ac26-3321af53b644\\\\tasks\\\\b1tjjbhu1.output\")",
+      "Bash(Get-ChildItem *)",
+      "Bash(pnpm add *)",
+      "Bash(Get-Content *)",
+      "WebFetch(domain:docs.privy.io)",
+      "Bash(Select-Object -First 5)",
+      "Bash(\"C:/Users/zafar/.foundry/bin/cast\" wallet *)",
+      "Bash(powershell *)",
+      "Bash(\"C:/Users/zafar/.foundry/bin/forge\" build *)"
+    ]
+  }
+}

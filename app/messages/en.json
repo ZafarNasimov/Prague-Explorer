@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "map": "Map",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile"
+  },
+  "map": {
+    "title": "Prague Explorer",
+    "subtitle": "Explore Prague. Earn credentials.",
+    "startCache": "Start",
+    "cacheCount": "{count} caches"
+  },
+  "cache": {
+    "scanTitle": "Scan the QR code",
+    "scanPrompt": "Scan the QR code at the cache site",
+    "manualEntry": "Can't scan? Enter code manually.",
+    "manualPlaceholder": "Enter the secret code",
+    "manualSubmit": "Submit code",
+    "quizTitle": "Location quiz",
+    "quizProgress": "Question {current} of {total}",
+    "submitAnswer": "Submit answer",
+    "correct": "Correct!",
+    "incorrect": "Wrong answer, try again.",
+    "allCorrect": "All correct — well done!",
+    "provingTitle": "Generating your private proof…",
+    "provingSubtitle": "Running privately in your browser (∼3 s)",
+    "provingMobile": "Still working — this is normal on mobile.",
+    "generatingProof": "Generating proof… running privately in your browser (∼3 s)",
+    "confirmTitle": "Confirm claim",
+    "displayNameLabel": "Your display name",
+    "donationLabel": "Optional donation (ETH)",
+    "donationPlaceholder": "0.000",
+    "submitting": "Submitting…",
+    "success": "Cache claimed!",
+    "alreadyClaimed": "You have already claimed this cache.",
+    "wrongNetwork": "Please switch to Scroll Sepolia.",
+    "proofFailed": "Proof verification failed. Try again.",
+    "unknownError": "Something went wrong. Try again.",
+    "wrongQr": "This QR is for a different cache. Try scanning again.",
+    "wrongQrFor": "QR code does not match \"{cacheName}\". Try scanning again.",
+    "tryAgain": "Try again",
+    "donatePrompt": "This cache supports {institution}. Want to send a tip?",
+    "donateGasNote": "Tip goes directly to the institution. You pay a small gas fee — your claim was free.",
+    "donateSend": "Send {amount} ETH",
+    "donateSending": "Sending…",
+    "donateSuccess": "Tip sent. Thank you.",
+    "donateError": "Donation failed. Your wallet was not charged."
+  },
+  "claim": {
+    "summary": "You are claiming the \"{cacheName}\" credential. Gas fees are sponsored — this is free. You receive 1 on-chain attestation. No personal data is shared.",
+    "summaryFallback": "Gas sponsorship is temporarily unavailable. This claim will use a small amount of testnet ETH from your wallet.",
+    "continueFallback": "Continue (wallet pays gas)",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "undo": {
+    "message": "Cache claimed. Undo within 60 seconds?",
+    "undo": "Undo"
+  },
+  "profile": {
+    "title": "My attestations",
+    "noAttestations": "No attestations yet. Find your first cache!",
+    "exportWallet": "Export wallet key",
+    "displayName": "Display name",
+    "editName": "Edit"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "rank": "Rank",
+    "name": "Name",
+    "claims": "Caches"
+  },
+  "errors": {
+    "alreadyClaimed": "You've already claimed this cache. Check your profile.",
+    "wrongNetwork": "Please switch to Scroll Sepolia.",
+    "proofFailed": "Proof verification failed. Try again?",
+    "quizWrong": "Not quite. Want to try this question again?",
+    "txReverted": "The claim couldn't go through. This is on us, not you. Try again in a moment.",
+    "noWallet": "No wallet found. Please log in with email or Google.",
+    "wrongQr": "Wrong QR code for this cache.",
+    "generic": "Something went wrong. Try again."
+  }
+}
