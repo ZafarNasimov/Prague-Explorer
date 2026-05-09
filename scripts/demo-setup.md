@@ -107,11 +107,11 @@ Run in **Git Bash**. The Semaphore CLI reads `PRIVATE_KEY` (not `DEPLOYER_PRIVAT
 export PRIVATE_KEY=<your deployer private key>
 
 cd app
-pnpm dlx @semaphore-protocol/cli@latest deploy --network scroll-sepolia
+pnpm dlx @semaphore-protocol/cli@latest deploy --network scroll-sepolia 
 cd ..
 ```
 
-The command prints a `SEMAPHORE_ADDRESS=0x...` line. Copy it.
+The command prints a `SEMAPHORE_ADDRESS=0x...` line. Copy it. Deploy skipped
 
 Add to `.env` (both vars — Foundry reads the unprefixed one, frontend reads the prefixed one):
 ```env

@@ -110,9 +110,12 @@ export async function submitJoinCache(
   cacheId: bigint,
   identityCommitment: bigint
 ): Promise<{ sponsored: boolean }> {
+  console.log("[CLAIM][submitJoinCache] start", { cacheId: cacheId.toString(), walletAddress });
+
   // Sponsored path
   try {
     const { smartAccountClient, pimlicoClient } = await buildSmartAccountClient(provider, walletAddress);
+    console.log("[CLAIM][submitJoinCache] smart account built, sending UserOp");
     const userOpHash = await smartAccountClient.sendUserOperation({
       calls: [{
         to: getContractAddress(),
@@ -124,13 +127,24 @@ export async function submitJoinCache(
         value: 0n,
       }],
     });
-    await pimlicoClient.waitForUserOperationReceipt({ hash: userOpHash });
+    console.log("[CLAIM][submitJoinCache] UserOp sent:", userOpHash);
+    const receipt = await pimlicoClient.waitForUserOperationReceipt({ hash: userOpHash });
+    console.log("[CLAIM][submitJoinCache] UserOp receipt:", {
+      success: (receipt as any)?.success,
+      receipt: (receipt as any)?.receipt,
+    });
     return { sponsored: true };
-  } catch {
-    // Paymaster unavailable or over-quota — fall through to EOA
+  } catch (err) {
+    console.error("[CLAIM][submitJoinCache] Pimlico path failed — falling to EOA");
+    console.error("[CLAIM][submitJoinCache] error name:", (err as any)?.name);
+    console.error("[CLAIM][submitJoinCache] error message:", (err as any)?.message);
+    console.error("[CLAIM][submitJoinCache] error cause:", (err as any)?.cause);
+    console.error("[CLAIM][submitJoinCache] error stack:", (err as any)?.stack);
+    console.error("[CLAIM][submitJoinCache] full JSON:", JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2));
   }
 
   // EOA fallback
+  console.warn("[CLAIM][submitJoinCache] [fallback-to-eoa] attempting EOA writeContract");
   const { publicClient, walletClient } = makeClients(provider, walletAddress);
   const hash = await walletClient.writeContract({
     address: getContractAddress(),
@@ -138,7 +152,16 @@ export async function submitJoinCache(
     functionName: "joinCache",
     args: [cacheId, identityCommitment],
   });
-  await publicClient.waitForTransactionReceipt({ hash });
+  console.log("[CLAIM][submitJoinCache] EOA tx hash:", hash);
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  console.log("[CLAIM][submitJoinCache] EOA receipt:", {
+    status: receipt.status,
+    blockNumber: receipt.blockNumber?.toString(),
+    gasUsed: receipt.gasUsed?.toString(),
+  });
+  if (receipt.status === "reverted") {
+    console.error("[CLAIM][submitJoinCache] [onchain-revert] EOA tx reverted", receipt);
+  }
   return { sponsored: false };
 }
 

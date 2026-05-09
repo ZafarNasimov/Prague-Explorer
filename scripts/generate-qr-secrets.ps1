@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Generate 6 cryptographically secure QR secrets for Prague Explorer caches.
 
@@ -38,7 +38,7 @@ if (-not ($gitignoreContent -match "qr-secrets\.json")) {
     Write-Error "scripts/qr-secrets.json must be listed in .gitignore before running this script."
     exit 1
 }
-if (-not ($gitignoreContent -match "^\.env$" -or $gitignoreContent -match "^\.env\b")) {
+if (-not ($gitignoreContent -match "(?m)^\.env\r?$")) {
     Write-Error ".env must be listed in .gitignore before running this script."
     exit 1
 }

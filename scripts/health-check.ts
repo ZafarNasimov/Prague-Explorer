@@ -114,10 +114,11 @@ async function checkContractDeployed(): Promise<Result> {
 
 async function checkCachesRegistered(): Promise<Result> {
   if (!CONTRACT_ADDR) return skip("NEXT_PUBLIC_PRAGUE_EXPLORER_ADDRESS not set");
-  // cacheExists(uint256) = selector 0x... — keccak256("cacheExists(uint256)") = 0xa3a2c16c
-  const selector = "a3a2c16c";
-  const registered: number[] = [];
-  const missing: number[] = [];
+  // Use cacheBeneficiary(uint256) public mapping getter — keccak256 selector 0x1c859169.
+  // Public storage reads cannot revert, unlike cacheExists() which reverts on the Scroll Sepolia RPC.
+  // Cross-checks the returned address against hardcoded BENEFICIARIES to catch mis-registration.
+  const selector = "1c859169";
+  const wrong: string[] = [];
   try {
     for (let id = 1; id <= 6; id++) {
       const data = `0x${selector}${encodeUint256(BigInt(id))}`;
@@ -125,11 +126,14 @@ async function checkCachesRegistered(): Promise<Result> {
         { to: CONTRACT_ADDR, data },
         "latest",
       ]) as string;
-      // result is bytes32; non-zero = true
-      const exists = BigInt(result) !== 0n;
-      (exists ? registered : missing).push(id);
+      // ABI-encoded address: 32 bytes, address occupies the last 20 (40 hex chars).
+      const returned = ("0x" + result.slice(-40)).toLowerCase();
+      const expected = BENEFICIARIES[id].toLowerCase();
+      if (returned !== expected) {
+        wrong.push(`cache ${id}: got ${returned.slice(0, 10)}… want ${expected.slice(0, 10)}…`);
+      }
     }
-    if (missing.length > 0) return fail(`caches ${missing.join(",")} not registered`);
+    if (wrong.length > 0) return fail(wrong.join("; "));
     return pass(`all 6 registered`);
   } catch (e) {
     return fail(String(e));

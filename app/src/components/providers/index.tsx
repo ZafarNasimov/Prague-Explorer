@@ -23,6 +23,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           ethereum: { createOnLogin: "users-without-wallets" },
         },
         loginMethods: ["email", "google"],
+        externalWallets: {
+          coinbaseWallet: { connectionOptions: "eoaOnly" },
+        },
       }}
     >
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

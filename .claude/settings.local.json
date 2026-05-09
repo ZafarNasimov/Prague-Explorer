@@ -37,7 +37,15 @@
       "Bash(Select-Object -First 5)",
       "Bash(\"C:/Users/zafar/.foundry/bin/cast\" wallet *)",
       "Bash(powershell *)",
-      "Bash(\"C:/Users/zafar/.foundry/bin/forge\" build *)"
+      "Bash(\"C:/Users/zafar/.foundry/bin/forge\" build *)",
+      "Bash(python3 -c \"import json,sys; abi=json.load\\(sys.stdin\\)['abi']; [print\\(e['name'], e.get\\('inputs',''\\)\\) for e in abi if e.get\\('type'\\)=='function' and 'cache' in e.get\\('name',''\\).lower\\(\\)]\")",
+      "Bash(python3 -c ' *)",
+      "Bash(pnpm list *)",
+      "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\('version:', p.get\\('version'\\)\\); print\\('peerDeps:', json.dumps\\(p.get\\('peerDependencies', {}\\), indent=2\\)\\); print\\('deps wagmi:', p.get\\('dependencies',{}\\).get\\('wagmi','not found'\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./node_modules/@privy-io/react-auth/package.json'\\); console.log\\('version:', p.version\\); console.log\\('peerDeps:', JSON.stringify\\(p.peerDependencies, null, 2\\)\\); console.log\\('wagmi dep:', \\(p.dependencies||{}\\).wagmi || 'not in deps'\\);\")",
+      "Bash(node -e \"const p=require\\('./node_modules/wagmi/package.json'\\); console.log\\('wagmi version:', p.version\\); console.log\\('peerDeps:', JSON.stringify\\(p.peerDependencies||{}, null, 2\\)\\); console.log\\('react peer:', \\(p.peerDependencies||{}\\).react || 'none'\\);\")",
+      "Bash(node -e \"const p=require\\('./node_modules/@privy-io/react-auth/package.json'\\); console.log\\('main:', p.main\\); console.log\\('exports:', JSON.stringify\\(p.exports, null, 2\\).slice\\(0, 500\\)\\);\")",
+      "Bash(node -e ' *)"
     ]
   }
 }
