@@ -1,8 +1,29 @@
 {
   "nav": {
-    "map": "Map",
+    "home": "Home",
+    "explore": "Explore",
+    "map": "Explore",
     "leaderboard": "Leaderboard",
     "profile": "Profile"
+  },
+  "home": {
+    "heroHeadline": "Prove you visited Prague. Privately.",
+    "heroSubheadline": "A privacy-preserving geocaching protocol on Ethereum. Earn verifiable credentials without revealing who you are. Tip the cultural institutions that make Prague special.",
+    "heroCta": "Explore the map",
+    "heroCtaSecondary": "How it works",
+    "whatTitle": "What it does",
+    "feat1Title": "Prove your visit",
+    "feat1Body": "Solve a quiz at a Prague cultural site. A zero-knowledge proof verifies you were there.",
+    "feat2Title": "Stay anonymous",
+    "feat2Body": "The chain knows a legitimate visit happened. It never learns who you are.",
+    "feat3Title": "Support culture",
+    "feat3Body": "Tip the institutions that steward Prague's cultural heritage, directly on-chain.",
+    "cachesTitle": "Six Prague caches",
+    "howTitle": "How it works",
+    "step1": "Sign in with Google. We give you a wallet automatically.",
+    "step2": "Pick a cache. Walk to the location and scan the QR code.",
+    "step3": "Answer three quick questions about Czech history.",
+    "step4": "Claim your credential. Optionally tip the institution."
   },
   "map": {
     "title": "Prague Explorer",
@@ -55,10 +76,6 @@
     "justFunded": "Wallet topped up with testnet ETH for gas.",
     "error": "Could not top up wallet — you may need a small amount of testnet ETH to claim."
   },
-  "undo": {
-    "message": "Cache claimed. Undo within 60 seconds?",
-    "undo": "Undo"
-  },
   "profile": {
     "title": "My attestations",
     "noAttestations": "No attestations yet. Find your first cache!",
@@ -77,6 +94,13 @@
     "description": "Your {cacheName} credential is already in your profile. Each cache can only be claimed once per person — that's part of the privacy guarantee.",
     "viewProfile": "View my credentials",
     "backToMap": "Back to map"
+  },
+  "verify": {
+    "transaction": "View transaction on Scrollscan",
+    "attestation": "View attestation on EAS",
+    "contract": "Contract on Scrollscan",
+    "schema": "Attestation schema on EAS",
+    "source": "Source on GitHub"
   },
   "errors": {
     "alreadyClaimed": "You've already claimed this cache. Check your profile.",

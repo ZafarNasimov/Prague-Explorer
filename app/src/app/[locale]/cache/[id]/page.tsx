@@ -40,7 +40,6 @@ interface FlowState {
   displayName: string;
   errorKey: string;
   scanError: string; // inline message shown in the scan step (wrong QR, etc.)
-  undoVisible: boolean;
 }
 
 const INITIAL: FlowState = {
@@ -52,7 +51,6 @@ const INITIAL: FlowState = {
   displayName: "",
   errorKey: "",
   scanError: "",
-  undoVisible: false,
 };
 
 export default function CachePage() {
@@ -65,12 +63,12 @@ export default function CachePage() {
 
   const [state, setState] = useState<FlowState>(INITIAL);
   const [provingTooLong, setProvingTooLong] = useState(false);
+  const [claimTxHash, setClaimTxHash] = useState("");
   const [donationEth, setDonationEth] = useState("");
   const [donating, setDonating] = useState(false);
   const [donateTxHash, setDonateTxHash] = useState("");
   const [donateError, setDonateError] = useState("");
   const provingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cache = getCacheById(cacheId);
   const cacheName = cache ? getCacheName(cache, locale) : `Cache ${cacheId}`;
@@ -272,17 +270,14 @@ export default function CachePage() {
         if (!embeddedWallet || !state.proof) throw new Error("missing wallet or proof");
 
         const provider = (await embeddedWallet.getEthereumProvider()) as EIP1193Provider;
-        await submitClaim(provider, embeddedWallet.address as `0x${string}`, {
+        const txHash = await submitClaim(provider, embeddedWallet.address as `0x${string}`, {
           cacheId: BigInt(cacheId),
           proof: state.proof,
           displayName: state.displayName,
         });
 
-        setState((s) => ({ ...s, step: "success", undoVisible: true }));
-        undoTimer.current = setTimeout(
-          () => setState((s) => ({ ...s, undoVisible: false })),
-          60_000
-        );
+        setClaimTxHash(txHash);
+        setState((s) => ({ ...s, step: "success" }));
       } catch (err) {
         console.error('[CLAIM][page-statemachine] submit caught:', err);
         const e2 = err as Error & { cause?: unknown };
@@ -306,9 +301,6 @@ export default function CachePage() {
 
     runSubmit();
 
-    return () => {
-      if (undoTimer.current) clearTimeout(undoTimer.current);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.step]);
 
@@ -358,6 +350,8 @@ export default function CachePage() {
 
   if (state.step === "quiz") {
     const q = cache.quiz[state.currentQuestion];
+    const question = locale === "cs" ? q.questionCs : q.questionEn;
+    const options = locale === "cs" ? q.optionsCs : q.optionsEn;
     return (
       <PageShell cacheName={cacheName}>
         <p className="mb-1 text-xs text-zinc-500">
@@ -366,7 +360,7 @@ export default function CachePage() {
             total: cache.quiz.length,
           })}
         </p>
-        <p className="mb-6 font-medium leading-snug">{q.question}</p>
+        <p className="mb-6 font-medium leading-snug">{question}</p>
 
         {state.wrongAnswer && (
           <p className="mb-4 rounded-lg bg-red-900/30 px-4 py-2 text-sm text-red-300">
@@ -375,7 +369,7 @@ export default function CachePage() {
         )}
 
         <div className="flex flex-col gap-3">
-          {q.options.map((opt, i) => (
+          {options.map((opt, i) => (
             <button
               key={i}
               onClick={() => handleAnswer(i)}
@@ -479,6 +473,27 @@ export default function CachePage() {
           >
             {t("nav.profile")} →
           </Link>
+
+          {claimTxHash && (
+            <div className="flex gap-3">
+              <a
+                href={`https://sepolia.scrollscan.com/tx/${claimTxHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-300"
+              >
+                {t("verify.transaction")} <ExternalLinkIcon className="h-3 w-3" />
+              </a>
+              <a
+                href={`https://scroll-sepolia.easscan.org/schema/view/${process.env.NEXT_PUBLIC_EAS_SCHEMA_UID ?? ""}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-300"
+              >
+                {t("verify.attestation")} <ExternalLinkIcon className="h-3 w-3" />
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Optional donation — visually separated, purely opt-in */}
@@ -528,18 +543,6 @@ export default function CachePage() {
           </div>
         )}
 
-        {/* Undo toast — cosmetic only; attestations are on-chain and permanent */}
-        {state.undoVisible && (
-          <div className="fixed bottom-20 left-4 right-4 flex items-center justify-between rounded-xl bg-zinc-800 px-4 py-3 shadow-xl">
-            <span className="text-sm text-zinc-200">{t("undo.message")}</span>
-            <button
-              onClick={() => setState((s) => ({ ...s, undoVisible: false }))}
-              className="ml-4 rounded-lg bg-zinc-700 px-3 py-1 text-sm text-white"
-            >
-              {t("undo.undo")}
-            </button>
-          </div>
-        )}
       </PageShell>
     );
   }
@@ -565,7 +568,7 @@ export default function CachePage() {
               {t("alreadyClaimed.viewProfile")}
             </Link>
             <Link
-              href={`/${locale}`}
+              href={`/${locale}/explore`}
               className="w-full rounded-xl border border-zinc-700 py-3 text-center text-sm text-zinc-300"
             >
               {t("alreadyClaimed.backToMap")}
@@ -609,7 +612,7 @@ function PageShell({
   return (
     <div className="mx-auto max-w-md px-4 pt-6">
       <div className="mb-6 flex items-center gap-3">
-        <Link href={`/${locale}`} className="text-zinc-400 hover:text-white">
+        <Link href={`/${locale}/explore`} className="text-zinc-400 hover:text-white">
           ←
         </Link>
         <h1 className="text-lg font-semibold">{cacheName}</h1>
@@ -636,6 +639,14 @@ function CheckIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
     </svg>
   );
 }

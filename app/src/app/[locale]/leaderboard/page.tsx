@@ -85,6 +85,21 @@ export default function LeaderboardPage() {
           </tbody>
         </table>
       )}
+
+      {/* Verification footer */}
+      <div className="mt-8 border-t border-zinc-800 pt-4">
+        <p className="text-xs text-zinc-500">
+          {locale === "cs" ? "Všechny záznamy jsou ověřitelné on-chain — " : "All claims are verifiable on-chain — "}
+          <a
+            href={`https://sepolia.scrollscan.com/address/${process.env.NEXT_PUBLIC_PRAGUE_EXPLORER_ADDRESS ?? ""}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-zinc-300"
+          >
+            {locale === "cs" ? "zobrazit kontrakt na Scrollscan" : "view contract on Scrollscan"}
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

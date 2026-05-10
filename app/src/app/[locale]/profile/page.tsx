@@ -158,6 +158,14 @@ export default function ProfilePage() {
                       locale === "cs" ? "cs-CZ" : "en-GB"
                     )}
                   </p>
+                  <a
+                    href={`https://scroll-sepolia.easscan.org/attestation/view/${a.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-0.5 inline-flex items-center gap-1 text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-300"
+                  >
+                    {locale === "cs" ? "Ověřit na EAS" : "Verify on EAS"} ↗
+                  </a>
                 </div>
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-400">
                   ✓

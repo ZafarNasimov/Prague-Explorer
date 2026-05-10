@@ -139,7 +139,7 @@ export async function submitClaim(
   provider: EIP1193Provider,
   walletAddress: Address,
   params: ClaimParams
-): Promise<void> {
+): Promise<`0x${string}`> {
   const unpacked = unpackProof(params.proof);
   const { publicClient, walletClient } = makeClients(provider, walletAddress);
 
@@ -170,6 +170,7 @@ export async function submitClaim(
     console.error('[CLAIM][submitClaim] [onchain-revert] tx reverted on-chain', receipt);
     throw new Error("claimCache reverted on-chain");
   }
+  return hash;
 }
 
 /** Direct ETH transfer from the user's wallet to a beneficiary address. */

@@ -38,9 +38,9 @@ import {IEAS} from "./interfaces/IEAS.sol";
  *    registered in the Merkle tree before a proof of membership can be generated.
  *    There is no way to prove membership in a set you haven't joined.
  *
- *    Mitigation: joinCache is routed via the Pimlico ERC-4337 paymaster so the
- *    gas payer is the paymaster contract, not the user's wallet. This decouples
- *    the gas-funding identity from the identity commitment being registered.
+ *    Mitigation: user wallets are pre-funded by a server-side deployer account
+ *    so the gas payer identity is distinct from the Semaphore identity being
+ *    registered. The deployer's address is not linked to the identity commitment.
  *
  * 3. PROOF GENERATION (client-side, ~3 seconds in-browser)
  *
@@ -193,7 +193,7 @@ contract PragueExplorer {
      *
      * PRIVACY TRADE-OFF: this call reveals that *someone* is preparing to claim
      * cache `cacheId`. The identity commitment has no link to any external identity.
-     * This is routed via the Pimlico paymaster in production (gas payer ≠ claimer).
+     * User wallets are pre-funded by a deployer account (gas payer ≠ claimer).
      * See contract header for full discussion.
      *
      * @param cacheId            Cache the user has verified at (QR + quiz).

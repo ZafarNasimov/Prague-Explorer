@@ -19,8 +19,7 @@ Browser (Next.js 14 + Privy embedded wallet)
     Scroll Sepolia (zkEVM L2)
         ├── PragueExplorer.sol   — caches, nullifiers, EAS attestation hook
         ├── Semaphore verifier   — deployed once, reused per cache group
-        ├── EAS schema           — one attestation per successful claim
-        └── Pimlico paymaster    — every tx is gasless for the user
+        └── EAS schema           — one attestation per successful claim
 ```
 
 ### Why these choices
@@ -30,7 +29,7 @@ Browser (Next.js 14 + Privy embedded wallet)
 | Scroll Sepolia | zkEVM L2, full EVM equivalence, EthPrague-aligned |
 | Semaphore v4 | Mature ZK protocol; scope = cacheId prevents cross-cache linkability |
 | Privy embedded wallets | Email/Google login, no MetaMask required for judges or tourists |
-| Pimlico ERC-4337 | Confirmed support for Scroll Sepolia (chain 534351); free tier OK for demo |
+| Deployer auto-funding | Server-side deployer tops up new wallets with testnet ETH; users pay gas from their own EOA |
 | EAS attestations | Composable credentials; users own their proof, not a custodied badge |
 | No GPS | Presence proved by QR scan + correct quiz — no geolocation API required |
 
@@ -58,7 +57,6 @@ Browser (Next.js 14 + Privy embedded wallet)
 │   ├── test/         # Foundry tests
 │   └── script/       # Deploy.s.sol + caches.json
 ├── scripts/          # Demo tooling (QR printer, setup guide)
-├── Cryptocaching-Hedera/   # Original Hedera prototype — frozen, pending deletion
 ├── .env.example      # Environment variable template
 ├── .gitignore
 ├── PRIVACY.md        # Data collection & ZK guarantees (Phase 8)
@@ -131,11 +129,10 @@ See [`PRIVACY.md`](PRIVACY.md) (generated in Phase 8) for the full breakdown. Sh
 ## Known Limitations (v1)
 
 - ENS L2 subname minting skipped — display names stored on-chain, user-chosen, unverified
-- "Undo claim" toast is cosmetic — the on-chain attestation is final; the 60-second window suppresses UI display only
 - `joinCache` (group membership) is observable — an attacker watching mempool knows *someone* is attempting cache X, but not who
 
 ---
 
 ## Built with
 
-[Semaphore](https://semaphore.pse.dev/) · [Scroll](https://scroll.io/) · [EAS](https://attest.sh/) · [Privy](https://privy.io/) · [Pimlico](https://pimlico.io/) · [Foundry](https://getfoundry.sh/) · [Next.js](https://nextjs.org/)
+[Semaphore](https://semaphore.pse.dev/) · [Scroll](https://scroll.io/) · [EAS](https://attest.sh/) · [Privy](https://privy.io/) · [Foundry](https://getfoundry.sh/) · [Next.js](https://nextjs.org/)

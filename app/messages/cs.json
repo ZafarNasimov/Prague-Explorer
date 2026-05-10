@@ -1,8 +1,29 @@
 {
   "nav": {
+    "home": "Domů",
+    "explore": "Mapa",
     "map": "Mapa",
     "leaderboard": "Žebříček",
     "profile": "Profil"
+  },
+  "home": {
+    "heroHeadline": "Prokažte, že jste byli v Praze. Soukromě.",
+    "heroSubheadline": "Protokol pro soukromé geocaching na Ethereu. Získejte ověřitelné certifikáty, aniž by kdokoli věděl, kdo jste. Podpořte kulturní instituce, které dělají Prahu výjimečnou.",
+    "heroCta": "Prozkoumat mapu",
+    "heroCtaSecondary": "Jak to funguje",
+    "whatTitle": "Co to dělá",
+    "feat1Title": "Dokažte návštěvu",
+    "feat1Body": "Vyřešte kvíz u pražské kulturní památky. Zero-knowledge důkaz ověří, že jste tam byli.",
+    "feat2Title": "Zůstaňte anonymní",
+    "feat2Body": "Blockchain ví, že se uskutečnila legitimní návštěva. Nikdy se nedoví, kdo jste.",
+    "feat3Title": "Podpořte kulturu",
+    "feat3Body": "Přispějte institucím, které pečují o pražské kulturní dědictví, přímo on-chain.",
+    "cachesTitle": "Šest pražských keší",
+    "howTitle": "Jak to funguje",
+    "step1": "Přihlaste se přes Google. Automaticky vám vytvoříme peněženku.",
+    "step2": "Vyberte keš. Dojděte na místo a naskenujte QR kód.",
+    "step3": "Odpovězte na tři rychlé otázky o české historii.",
+    "step4": "Nárokujte si certifikát. Volitelně přispějte instituci."
   },
   "map": {
     "title": "Prague Explorer",
@@ -55,10 +76,6 @@
     "justFunded": "Peněženka doplněna testovacími ETH na plyn.",
     "error": "Peněženku se nepodařilo doplnit — pro ověření může být potřeba malé množství testovacích ETH."
   },
-  "undo": {
-    "message": "Keš získána. Vrátit do 60 sekund?",
-    "undo": "Vrátit"
-  },
   "profile": {
     "title": "Moje ověření",
     "noAttestations": "Zatím žádná ověření. Najděte první keš!",
@@ -77,6 +94,13 @@
     "description": "Váš certifikát {cacheName} je již ve vašem profilu. Každou cache lze nárokovat pouze jednou na osobu — to je součást záruky soukromí.",
     "viewProfile": "Zobrazit mé certifikáty",
     "backToMap": "Zpět na mapu"
+  },
+  "verify": {
+    "transaction": "Zobrazit transakci na Scrollscan",
+    "attestation": "Zobrazit certifikát na EAS",
+    "contract": "Smart kontrakt na Scrollscan",
+    "schema": "Schéma certifikátů na EAS",
+    "source": "Zdrojový kód na GitHubu"
   },
   "errors": {
     "alreadyClaimed": "Tuto keš jste již získali. Zkontrolujte svůj profil.",
